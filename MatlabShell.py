@@ -144,9 +144,21 @@ class MatlabShell(cmd.Cmd):
 
         self.cmdloop()
 
-    def do_run(self, line): #run a m-file by using command "run filename"
+    def do_run(self, line): #run m-file by using command "run filename.m"
+        '''Run m-file by using command "run example.m"'''
+        if line.endswith(')'):
+            line = line.replace(')', '')
+            line = line.replace('(', '')
+        if line.endswith('.m'):
+            line = line.replace('.m', '')
         try:
             getattr(self.engine, line)(nargout=0)
+        except:
+            pass
+
+    def do_help(self, line):
+        try:
+            getattr(self.engine, 'help')(line, nargout=0)
         except:
             pass
 
@@ -158,4 +170,8 @@ class MatlabShell(cmd.Cmd):
 
 
 if __name__ == "__main__":
-    MatlabShell()
+    try:
+        MatlabShell()
+    except:
+        logging.exception('Internal Error')
+        input()
