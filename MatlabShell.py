@@ -59,9 +59,8 @@ except ImportError as e:
 try:
     import matlab.engine
 except ImportError:
-    input('Press any key to install matlab engine for python')
     try:
-        import shutil, json, win32api, win32con, win32event, win32process
+        import os, ctypes, subprocess, win32api, win32con, win32event, win32process
         from win32com.shell.shell import ShellExecuteEx
         from win32com.shell import shellcon
     except ImportError as e:
@@ -83,7 +82,7 @@ except ImportError:
                 pass
         matpath = matpath + '\\R' + str(year) + version
         print('>>> Matlab is installed on path ' + matpath)
-        print('>>> Matlab plugin is being insstalled...' + matpath)
+        print('>>> Matlab engine for python is being installed...' + matpath)
         matpath += '\\extern\\engines\\python'
         os.chdir(matpath)
 
@@ -148,13 +147,13 @@ class MatlabShell(cmd.Cmd):
     def do_run(self, line): #run a m-file by using command "run filename"
         try:
             getattr(self.engine, line)(nargout=0)
-        except matlab.engine.MatlabExecutionError:
+        except:
             pass
 
     def default(self, line):
         try:
             getattr(self.engine, 'eval')(line, nargout=0)
-        except matlab.engine.MatlabExecutionError:
+        except:
             pass
 
 
