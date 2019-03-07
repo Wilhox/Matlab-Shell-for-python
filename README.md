@@ -7,6 +7,7 @@ Windows with Python 3.5 and Matlab R2015 or newer
 - 64 bit Matlab requires 64 bit python
 - 32 bit Matlab requires 32 bit python
 
-# Installation
+# Automated Installation
 
-- Just download and run it.
+- Just download and run it
+- matlab.engine will be installed at first run
