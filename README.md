@@ -10,7 +10,7 @@ Windows with Python 3.5 and Matlab R2015 or newer
 # Automated Installation
 
 - Just download and run it
-- matlab.engine will be installed at first run
+- Matlab API will be installed at first run
 
 # Licence
 
