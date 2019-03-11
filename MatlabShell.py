@@ -1,7 +1,8 @@
 """
 Matlab Shell v.1.0
 
--Use python to run your m-files and Matlab commands
+- Use python to run your m-files and Matlab commands
+- Directly run m-scipts at shared session: arg1 = filebaseName, arg2 = filePath
 
 
 This is free software; you can redistribute it and/or modify
@@ -12,7 +13,19 @@ but WITHOUT ANY WARRANTY;
 ============================================================================
 """
 
+INSTRUCTIONS = """
+========================================================================
+INSTRUCTIONS
+1. Any Matlab command is valid, Matlab engine is running at background
+2. Move to desktop by using command "desktop"
+3. Run a script by using command "run yourfile.m"
+4. Show current dir by using command "dir"
+5. Type "help" to get more information
+6. Press Enter to list your variables
+========================================================================
+"""
 
+SHELL = 'MatlabShell>>>'
 
 def PackageInstall(error):
     """
@@ -20,32 +33,22 @@ def PackageInstall(error):
     - Downloads it automatically after five seconds.
     - Restarts script
     - Example:
-    try:
-    import numpy as np
-    import matplotlib.pyplot as plot
-
-    except ImportError as error:
-    PackageInstall(error)
+        try:
+            import numpy as np
+            import matplotlib.pyplot as plot
+        except ImportError as error:
+            PackageInstall(error)
     """
     import time, subprocess, os, sys
     module = str(error)[15:].replace('\'', '')
+    print(__doc__)
     print('>>>',str(error))
     print('>>> Downloading missing modules, please wait...')
     print('>>> The scirpt may restart multiple times')
     if 'win32com'in module or 'win32api' in module: #win32com and win32api must be installed as pywin32
         module = 'pypiwin32'
-
-    output = subprocess.getoutput("pip install " + module)
-    for a in output.splitlines():
-        if 'NewConnectionError' in a:
-            print('>>>', a)
-            print('>>> CONNECTION FAILED')
-            input('>>> Press any key to try again')
-        elif 'No matching distribution found' in a:
-            print('>>>', a)
-            input('>>> Press enter to try again')
-
-    print('>>> Restarting...')
+    if subprocess.call("pip install " + module):
+        input('Press any key to continue')
     time.sleep(1)
     os.startfile(__file__)
     sys.exit()
@@ -132,13 +135,13 @@ class MatlabShell(cmd.Cmd):
 
         if engine == None:
             try:
-                print('Matlab Shell v.1.0')
-                print('Starting matlab...')
+                print(SHELL,'Matlab engine is starting...')
                 self.engine = matlab.engine.start_matlab()
-                print('\n')
+                print(SHELL,'Matlab is running')
             except:
-                logging.exception('>>> STARTUP FAILED')
+                logging.exception(SHELL,'MSTARTUP FAILED')
                 input()
+                sys.exit()
         else:
             self.engine = engine
 
@@ -162,6 +165,12 @@ class MatlabShell(cmd.Cmd):
         except:
             pass
 
+    def emptyline(self):
+        try:
+            getattr(self.engine, 'who')(nargout=0)
+        except:
+            pass       
+
     def default(self, line):
         try:
             getattr(self.engine, 'eval')(line, nargout=0)
@@ -170,8 +179,33 @@ class MatlabShell(cmd.Cmd):
 
 
 if __name__ == "__main__":
-    try:
+    print('Matlab Shell v.1.0')
+    print(INSTRUCTIONS)
+    if len(sys.argv) < 2: #The script is started without arguments, -> Just start the shell
         MatlabShell()
-    except:
-        logging.exception('Internal Error')
-        input()
+    else: #The script is started with argumets, run m-script before starting shell.
+        try:
+            base = sys.argv[1]
+            f = True
+            for a in matlab.engine.find_matlab():
+                if base == a:
+                    print(SHELL,'Connecting to Matlab session named "' + base + '"...')
+                    engine = matlab.engine.connect_matlab(base)
+                    f = False
+                    break
+            if f:
+                print(SHELL,'Creating shared Matlab session named "' + base + '"...')
+                engine = matlab.engine.start_matlab()
+                getattr(engine, 'matlab.engine.shareEngine')(base, nargout=0)
+                engine.cd(sys.argv[2])
+
+            try:
+                getattr(engine, 'run')(base, nargout=0)
+            except:
+                pass
+            MatlabShell(engine)
+        except SystemExit:
+            sys.exit()
+        except:
+            logging.exception('Internal Error')
+            input()
