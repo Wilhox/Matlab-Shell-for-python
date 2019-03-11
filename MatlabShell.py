@@ -10,20 +10,35 @@ it. This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY;
 
 (C) 2019 Ville Lauronen <ville.lauronen(at)gmail.com>
-============================================================================
 """
 
 INSTRUCTIONS = """
 ========================================================================
 INSTRUCTIONS
-1. Any Matlab command is valid, Matlab engine is running at background
+1. Any Matlab command is valid, Matlab engine is running at background.
 2. Move to desktop by using command "desktop"
 3. Run a script by using command "run yourfile.m"
 4. Show current dir by using command "dir"
-5. Type "help" to get more information
-6. Press Enter to list your variables
+5. Press Enter to list your variables
+6. Type "help" or "doc" to get more information
 ========================================================================
 """
+
+AUTOSETUP = '''
+========================================================================
+MATLAB API FOR PYTHON
+
+REQUIREMENTS
+
+1. Windows with Python 3.5 and Matlab R2015 or newer
+2. 64 bit Matlab requires 64 bit python
+3. 32 bit Matlab requires 32 bit python
+
+https://se.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html
+
+Press any key to intall, administrator rights are needed.
+========================================================================
+'''
 
 SHELL = 'MatlabShell>>>'
 
@@ -70,31 +85,39 @@ except ImportError:
         PackageInstall(e)
 
     try:
-        matpath = os.environ['PROGRAMW6432'] + '\\MATLAB'
-
-        #find newest version
-        year = 0
-        version = 'b'
-        for folder in os.listdir(matpath):
-            folder = folder.replace('R', '')
-            try:
-                if int(folder[:-1]) > year:
-                    year = int(folder[:-1])
-                    version = folder[-1]
-            except:
-                pass
-        matpath = matpath + '\\R' + str(year) + version
-        print('>>> Matlab is installed on path ' + matpath)
-        print('>>> Matlab engine for python is being installed...' + matpath)
-        matpath += '\\extern\\engines\\python'
-        os.chdir(matpath)
-
         #administrator rights are needed
         if ctypes.windll.shell32.IsUserAnAdmin():
+
+            matpath = os.environ['PROGRAMW6432'] + '\\MATLAB'
+
+            #find newest version
+            year = 0
+            version = 'b'
+            for folder in os.listdir(matpath):
+                folder = folder.replace('R', '')
+                try:
+                    if int(folder[:-1]) > year:
+                        year = int(folder[:-1])
+                        version = folder[-1]
+                except:
+                    pass
+
+            matpath = matpath + '\\R' + str(year) + version
+            print('>>> Matlab engine for python is being installed from ' + matpath+'...')
+            matpath += '\\extern\\engines\\python'
+            os.chdir(matpath)
             feedback = subprocess.getoutput("python  setup.py install")
             for rivi in feedback.splitlines():
                 print('>>>',rivi)
-        else: #elevate rights
+
+            #restart
+            input('Press any key to continue')
+            os.startfile(__file__)
+            sys.exit()
+
+        else: #Ask for install and elevate rights
+            print(AUTOSETUP)
+            input()
             process = ShellExecuteEx(
                 nShow = win32con.SW_SHOWNORMAL,
                 fMask = shellcon.SEE_MASK_NOCLOSEPROCESS,
@@ -103,17 +126,15 @@ except ImportError:
                 lpParameters = __file__)
             raise SystemExit
 
-        input('Press any key to continue')
-        os.startfile(__file__)
-        sys.exit()
-
     except FileNotFoundError:
         print('>>> MATLAB not found from ' + matpath)
-        print('>>> MATLAB plugin not installed')
+        print('More information: https://se.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html')
+        input()
     except SystemExit:
         raise SystemExit
     except:
-        logging.exception('>>> Can not install Matlab plugin')
+        logging.exception('Internal Error')
+        input()
 
 
 
@@ -165,18 +186,32 @@ class MatlabShell(cmd.Cmd):
         except:
             pass
 
+    def do_doc(self, line):
+        if line.endswith(')'):
+            line = line.replace(')', '')
+            line = line.replace('(', ' ')
+        try:
+            getattr(self.engine, 'doc')(line, nargout=0)
+        except:
+            pass
+
+    def do_shell(self, line):
+        """Pass command to a system shell when line begins with '!'"""
+        pass
+
     def emptyline(self):
+        '''Show all variables when pressing enter and line is empty'''
         try:
             getattr(self.engine, 'who')(nargout=0)
         except:
             pass       
 
     def default(self, line):
+        '''Unknown commands are send to Matlab'''
         try:
             getattr(self.engine, 'eval')(line, nargout=0)
         except:
             pass
-
 
 if __name__ == "__main__":
     print('Matlab Shell v.1.0')
