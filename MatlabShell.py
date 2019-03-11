@@ -36,7 +36,7 @@ REQUIREMENTS
 
 https://se.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html
 
-Press any key to intall, administrator rights are needed.
+Press enter to install, administrator rights are needed.
 ========================================================================
 '''
 
@@ -63,7 +63,7 @@ def PackageInstall(error):
     if 'win32com'in module or 'win32api' in module: #win32com and win32api must be installed as pywin32
         module = 'pypiwin32'
     if subprocess.call("pip install " + module):
-        input('Press any key to continue')
+        input('Press enter to continue')
     time.sleep(1)
     os.startfile(__file__)
     sys.exit()
@@ -111,7 +111,7 @@ except ImportError:
                 print('>>>',rivi)
 
             #restart
-            input('Press any key to continue')
+            input('Press enter to continue')
             os.startfile(__file__)
             sys.exit()
 
