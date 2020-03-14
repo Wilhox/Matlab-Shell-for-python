@@ -18,4 +18,4 @@ This is free software; you can redistribute it and/or modify
 it. This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY;
 
-(C) 2019 Ville Lauronen <ville.lauronen(at)gmail.com>
+(C) 2019 Ville Lauronen
